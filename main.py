@@ -133,7 +133,7 @@ def get_top_mentioned(sub_reddit):
     # Stock symbols in submission titles
     stock_symbols = []
     not_stocks = ["A", "I", "DD", "WSB", "YOLO", "RH", "EV", "PE", "ETH", "BTC", "E", "APES", "YOLO", "GAIN", "LOSS",
-                  "PORN", "WILL", "NOT", "SELL", "AOC", "CNBC", "CEO", "IN", "DAYS", "DFV", "NEXT", "IT",
+                  "WILL", "NOT", "SELL", "AOC", "CNBC", "CEO", "IN", "DAYS", "DFV", "NEXT", "IT",
                   "SEND", "U", "MOON", "HOLD"]
 
     for title in words_collection:
