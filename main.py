@@ -151,12 +151,14 @@ def get_top_mentionned(sub_reddit):
 
 
 if __name__ == '__main__':
+    # API keys
     reddit = praw.Reddit(client_id=reddit_client_ID,
                          client_secret=reddit_secret_token,
                          user_agent='SentAnalysis',
                          username=reddit_user_name,
                          reddit_password=reddit_password)
 
+    # Top mentionned stocks
     sub_reddit = reddit.subreddit('wallstreetbets')
     stocks = get_top_mentionned(sub_reddit)
     print("Stock symbols: ", stocks)
