@@ -116,7 +116,7 @@ def is_valid_ticker(symbol):
 def get_top_mentioned(sub_reddit):
     # 25 most upvotes recently : log(abs(upvotes - downvotes)) + (now - timeposted /45000)
     # https://medium.com/hacking-and-gonzo/how-reddit-ranking-algorithms-work-ef111e33d0d9
-    top_subreddit = sub_reddit.hot(limit=20)
+    top_subreddit = sub_reddit.hot(limit=25)
 
     # Empty list of words
     words_collection = []
