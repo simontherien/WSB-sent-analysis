@@ -114,7 +114,7 @@ def is_valid_ticker(symbol):
     return is_us_ticker
 
 
-def get_top_mentionned(sub_reddit):
+def get_top_mentioned(sub_reddit):
     # 25 most upvotes recently : log(abs(upvotes - downvotes)) + (now - timeposted /45000)
     # https://medium.com/hacking-and-gonzo/how-reddit-ranking-algorithms-work-ef111e33d0d9
     top_subreddit = sub_reddit.hot(limit=20)
@@ -158,9 +158,9 @@ if __name__ == '__main__':
                          username=reddit_user_name,
                          reddit_password=reddit_password)
 
-    # Top mentionned stocks
+    # Top mentioned stocks
     sub_reddit = reddit.subreddit('wallstreetbets')
-    stocks = get_top_mentionned(sub_reddit)
+    stocks = get_top_mentioned(sub_reddit)
     print("Stock symbols: ", stocks)
 
     # submission_statistics = []
