@@ -149,8 +149,6 @@ def get_top_mentionned(sub_reddit):
 
     return list(set(stock_symbols))  # Remove duplicates when returning stock list
 
-    #allo
-
 
 if __name__ == '__main__':
     reddit = praw.Reddit(client_id=reddit_client_ID,
