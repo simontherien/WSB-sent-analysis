@@ -8,19 +8,18 @@ Scraped WSB sentiment, got the top + most positively mentioned stocks on WSB. St
 What it uses is VADER (Valence Aware Dictionary for Sentiment Reasoning), which is a model used for text sentiment
 analysis that is sensitive to both polarity (positive/negative) and intensity (strength) of emotion.
 
-The way it works is by relying on a dictionary that maps lexical (aka word-based) features to emotion intensities,
-these are known as sentiment scores. The overall sentiment score of a comment/post is achieved by summing up the
-intensity of each word in the text. In some ways, it's easy: words like ‘love’, ‘enjoy’, ‘happy’, ‘like’ all convey a
-positive sentiment. Also VADER is smart enough to understand the basic context of these words, such as “did not love”
-as a negative statement. It also understands the emphasis of capitalization and punctuation, such as “ENJOY” which is
-pretty cool. Phrases like “The acting was good , but the movie could have been better” have sentiments in both
-polarities, which makes this kind of analysis tricky -- essentially w VADER you would analyze which part of the
-sentiment here is more intense.
+The way it works is by relying on a dictionary that maps lexical features to emotion intensities, these are known as
+sentiment scores. The overall sentiment score of a comment/post is achieved by summing up the intensity of each word
+in the text. In some ways, it's easy: words like ‘love’, ‘enjoy’, ‘happy’, ‘like’ all convey a positive sentiment.
+Also VADER is smart enough to understand the basic context of these words, such as “did not love” as a negative
+statement. It also understands the emphasis of capitalization and punctuation, such as “ENJOY”. Phrases like “The
+acting was good , but the movie could have been better” have sentiments in both polarities, which makes this kind of
+analysis tricky -- essentially w VADER you would analyze which part of the sentiment here is more intense.
 
 Possible improvements:
 - A quant strategy has to have near perfect statistically significant results for it to be
-relied on blinded, and this has a very narrow dataset that hasnt been tested across a full market cycle.
-- Build a simple WSB focused wording database and reference each with abbreviations or numbers which will make it much easier
+relied on blinded, and this has a very narrow dataset that hasn't been tested across a full market cycle. - Build a
+simple WSB focused wording database and reference each with abbreviations or numbers which will make it much easier
 for code to understand
 - Create a class that implements a common interface. This will allow you to swap out sentiment
 analysers and also use different data sources by extending classes
