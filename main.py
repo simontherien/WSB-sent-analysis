@@ -4,9 +4,9 @@
 """
 Momentum based strategy
 
-Scraped WSB sentiment, got the top + most positively mentioned stocks on WSB. Strategy rebalancing monthly.
-What it uses is VADER (Valence Aware Dictionary for Sentiment Reasoning), which is a model used for text sentiment
-analysis that is sensitive to both polarity (positive/negative) and intensity (strength) of emotion.
+Scraped WSB sentiment, got the top + most positively mentioned stocks on WSB. Uses is VADER (Valence Aware Dictionary
+for Sentiment Reasoning), which is a model used for text sentimentanalysis that is sensitive to both polarity
+(positive/negative) and intensity (strength) of emotion.
 
 The way it works is by relying on a dictionary that maps lexical features to emotion intensities, these are known as
 sentiment scores. The overall sentiment score of a comment/post is achieved by summing up the intensity of each word
