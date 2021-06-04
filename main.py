@@ -105,7 +105,7 @@ def get_date(date):
 # Is ticker a valid US company on 2021-06-02 ?
 def is_valid_ticker(symbol):
     # https://quant.stackexchange.com/questions/1640/where-to-download-list-of-all-common-stocks-traded-on-nyse-nasdaq-and-amex#comment64621_1640
-    stock_csv = pd.read_csv(r'C:\Users\thesi\OneDrive - CDPQ\Projet perso\stock_list.csv', header=None)
+    stock_csv = pd.read_csv(r'us_stock_list.csv', header=None)
     stock_list = np.concatenate(stock_csv.values).tolist()
     is_us_ticker = symbol in stock_list # Is the symbol a US stock?
 
@@ -133,7 +133,7 @@ def get_top_mentioned(sub_reddit):
     stock_symbols = []
     not_stocks = ["A", "I", "DD", "WSB", "YOLO", "RH", "EV", "PE", "ETH", "BTC", "E", "APES", "YOLO", "GAIN", "LOSS",
                   "WILL", "NOT", "SELL", "AOC", "CNBC", "CEO", "IN", "DAYS", "DFV", "NEXT", "IT",
-                  "SEND", "U", "MOON", "HOLD"]
+                  "SEND", "U", "MOON", "HOLD", "USD"]
 
     for title in words_collection:
         for word in title:
