@@ -35,7 +35,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from keys import reddit_client_ID, reddit_secret_token, reddit_user_name, reddit_password
 import re
 
-
+# TODO : commentSentiment
 # def commentSentiment(ticker, urlT):
 #     subComments = []
 #     bodyComment = []
@@ -78,7 +78,7 @@ import re
 #
 #     return (averageScore)
 #
-#
+# TODO : latestComment
 # def latestComment(ticker, urlT):
 #     subComments = []
 #     updateDates = []
@@ -97,7 +97,7 @@ import re
 #     updateDates.sort()
 #     return (updateDates[-1])
 #
-#
+# TODO : get_date
 # def get_date(date):
 #     return dt.datetime.fromtimestamp(date)
 
