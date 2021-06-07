@@ -115,6 +115,7 @@ def is_valid_ticker(symbol):
 def get_top_mentioned(sub_reddit):
     # 25 most upvotes recently : log(abs(upvotes - downvotes)) + (now - timeposted /45000)
     # https://medium.com/hacking-and-gonzo/how-reddit-ranking-algorithms-work-ef111e33d0d9
+    global stock_symbols_dict
     top_subreddit = sub_reddit.hot(limit=25)
 
     # Empty list of words
@@ -133,7 +134,7 @@ def get_top_mentioned(sub_reddit):
     stock_symbols = []
     not_stocks = ["A", "I", "DD", "WSB", "YOLO", "RH", "EV", "PE", "ETH", "BTC", "E", "APES", "YOLO", "GAIN", "LOSS",
                   "WILL", "NOT", "SELL", "AOC", "CNBC", "CEO", "IN", "DAYS", "DFV", "NEXT", "IT",
-                  "SEND", "U", "MOON", "HOLD", "USD"]
+                  "SEND", "U", "MOON", "HOLD", "USD", "TD", "IRS"]
 
     for title in words_collection:
         for word in title:
@@ -145,7 +146,11 @@ def get_top_mentioned(sub_reddit):
                 if is_valid_ticker(word):
                     stock_symbols.append(word)
 
-    return list(set(stock_symbols))  # Remove duplicates when returning stock list
+        stock_symbols_list = list(stock_symbols)
+        stock_symbols_dict = dict((x, stock_symbols_list.count(x)) for x in set(stock_symbols_list))
+        stock_symbols_dict_sorted = dict(sorted(stock_symbols_dict.items(), key=lambda item: item[1], reverse=True))
+
+    return stock_symbols_dict_sorted
 
 
 if __name__ == '__main__':
@@ -159,7 +164,7 @@ if __name__ == '__main__':
     # Top mentioned stocks
     sub_reddit = reddit.subreddit('wallstreetbets')
     stocks = get_top_mentioned(sub_reddit)
-    print("Stock symbols: ", stocks)
+    print("Stock symbols by occurences in 25 hottest WSB posts : ", stocks)
 
     # submission_statistics = []
     # d = {}
