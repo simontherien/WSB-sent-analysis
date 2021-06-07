@@ -18,9 +18,9 @@ analysis tricky -- essentially w VADER you would analyze which part of the senti
 
 Possible improvements:
 - A quant strategy has to have near perfect statistically significant results for it to be
-relied on blinded, and this has a very narrow dataset that hasn't been tested across a full market cycle. - Build a
-simple WSB focused wording database and reference each with abbreviations or numbers which will make it much easier
-for code to understand
+relied on blinded, and this has a very narrow dataset that hasn't been tested across a full market cycle.
+- Build a simple WSB focused wording database and reference each with abbreviations or numbers which will make it
+much easier for code to understand
 - Create a class that implements a common interface. This will allow you to swap out sentiment
 analysers and also use different data sources by extending classes
 - Implement it to know when to get it / out (execution)
@@ -35,71 +35,61 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from keys import reddit_client_ID, reddit_secret_token, reddit_user_name, reddit_password
 import re
 
-# TODO : commentSentiment
-# def commentSentiment(ticker, urlT):
-#     subComments = []
-#     bodyComment = []
-#     try:
-#         check = reddit.submission(url=urlT)
-#         subComments = check.comments
-#     except:
-#         return 0
-#
-#     for comment in subComments:
-#         try:
-#             bodyComment.append(comment.body)
-#         except:
-#             return 0
-#
-#     sia = SIA()
-#     results = []
-#     for line in bodyComment:
-#         scores = sia.polarity_scores(line)
-#         scores['headline'] = line
-#
-#         results.append(scores)
-#
-#     df = pd.DataFrame.from_records(results)
-#     df.head()
-#     df['label'] = 0
-#
-#     try:
-#         df.loc[df['compound'] > 0.1, 'label'] = 1
-#         df.loc[df['compound'] < -0.1, 'label'] = -1
-#     except:
-#         return 0
-#
-#     averageScore = 0
-#     position = 0
-#     while position < len(df.label) - 1:
-#         averageScore = averageScore + df.label[position]
-#         position += 1
-#     averageScore = averageScore / len(df.label)
-#
-#     return (averageScore)
-#
-# TODO : latestComment
-# def latestComment(ticker, urlT):
-#     subComments = []
-#     updateDates = []
-#     try:
-#         check = reddit.submission(url=urlT)
-#         subComments = check.comments
-#     except:
-#         return 0
-#
-#     for comment in subComments:
-#         try:
-#             updateDates.append(comment.created_utc)
-#         except:
-#             return 0
-#
-#     updateDates.sort()
-#     return (updateDates[-1])
-#
+
+def comment_sentiment(ticker, url_t):
+    body_comment = []
+
+    check = reddit.submission(url=url_t)
+    #
+    sub_comments = check.comments
+
+    for comment in sub_comments:
+        body_comment.append(comment.body)
+
+    sia = SIA()
+    results = []
+    for line in body_comment:
+        # Return a float for sentiment strength based on the input text. Positive values are positive valence,
+        # negative value are negative valence
+        scores = sia.polarity_scores(line)
+        scores['headline'] = line
+
+        results.append(scores)
+
+    df = pd.DataFrame.from_records(results)
+    df.head()
+    df['label'] = 0
+
+    df.loc[df['compound'] > 0.1, 'label'] = 1
+    df.loc[df['compound'] < -0.1, 'label'] = -1
+
+    average_score = 0
+    position = 0
+    while position < len(df.label) - 1:
+        average_score = average_score + df.label[position]
+        position += 1
+    average_score = average_score / len(df.label)
+
+    return average_score
+
+
+# TODO : latest_comment
+def latest_comment(ticker, url_t):
+    update_dates = []
+
+    check = reddit.submission(url=url_t)
+    sub_comments = check.comments
+
+    for comment in sub_comments:
+        update_dates.append(comment.created_utc)
+
+    update_dates.sort()
+    return update_dates[-1]
+
+
 # TODO : get_date
-# def get_date(date):
-#     return dt.datetime.fromtimestamp(date)
+def get_date(date):
+    return dt.datetime.fromtimestamp(date)
 
 
 # Is ticker a valid US company on 2021-06-02 ?
@@ -107,7 +97,7 @@ def is_valid_ticker(symbol):
     # https://quant.stackexchange.com/questions/1640/where-to-download-list-of-all-common-stocks-traded-on-nyse-nasdaq-and-amex#comment64621_1640
     stock_csv = pd.read_csv(r'us_stock_list.csv', header=None)
     stock_list = np.concatenate(stock_csv.values).tolist()
-    is_us_ticker = symbol in stock_list # Is the symbol a US stock?
+    is_us_ticker = symbol in stock_list  # Is the symbol a US stock?
 
     return is_us_ticker
 
@@ -139,7 +129,7 @@ def get_top_mentioned(sub_reddit):
         for word in title:
             # If word is upper case, does not contain a digit, length between 1 and 4 and is in US universe
             if word.isupper() and len(word) < 5 and not (
-            any(char.isdigit() for char in word)) and word not in not_stocks:
+                    any(char.isdigit() for char in word)) and word not in not_stocks:
                 word = word.replace("$", "", 1)
                 word = word.replace("#", "", 1)
                 if is_valid_ticker(word):
@@ -147,9 +137,8 @@ def get_top_mentioned(sub_reddit):
 
         stock_symbols_list = list(stock_symbols)
         stock_symbols_dict = dict((x, stock_symbols_list.count(x)) for x in set(stock_symbols_list))
-        stock_symbols_dict_sorted = dict(sorted(stock_symbols_dict.items(), key=lambda item: item[1], reverse=True))
 
-    return stock_symbols_dict_sorted
+    return dict(sorted(stock_symbols_dict.items(), key=lambda item: item[1], reverse=True))
 
 
 if __name__ == '__main__':
@@ -163,41 +152,45 @@ if __name__ == '__main__':
     # Top mentioned stocks
     sub_reddit = reddit.subreddit('wallstreetbets')
     stocks_dict = get_top_mentioned(sub_reddit)
-    print("Stock symbols by occurences in 25 hottest WSB posts : ", stocks_dict)
+    print("Stock symbols by occurrences in 25 hottest WSB posts : ", stocks_dict)
 
     stocks = list(stocks_dict.keys())
 
-    # submission_statistics = []
-    # d = {}
+    submission_statistics = []
+    d = {}
     # for ticker in stocks:
-    #     for submission in reddit.subreddit('wallstreetbets').search(ticker, limit=10):
-    #         if submission.domain != "self.wallstreetbets":
-    #             continue
-    #         d = {}
-    #         d['ticker'] = ticker
-    #         d['num_comments'] = submission.num_comments
-    #         d['comment_sentiment_average'] = commentSentiment(ticker, submission.url)
-    #         if d['comment_sentiment_average'] == 0.000000:
-    #             continue
-    #         d['latest_comment_date'] = latestComment(ticker, submission.url)
-    #         d['score'] = submission.score
-    #         d['upvote_ratio'] = submission.upvote_ratio
-    #         d['date'] = submission.created_utc
-    #         d['domain'] = submission.domain
-    #         d['num_crossposts'] = submission.num_crossposts
-    #         d['author'] = submission.author
-    #         submission_statistics.append(d)
-    #
-    # dfSentimentStocks = pd.DataFrame(submission_statistics)
-    #
-    # _timestampcreated = dfSentimentStocks["date"].apply(get_date)
-    # dfSentimentStocks = dfSentimentStocks.assign(timestamp=_timestampcreated)
-    #
-    # _timestampcomment = dfSentimentStocks["latest_comment_date"].apply(get_date)
-    # dfSentimentStocks = dfSentimentStocks.assign(commentdate=_timestampcomment)
-    #
-    # dfSentimentStocks.sort_values("latest_comment_date", axis=0, ascending=True, inplace=True, na_position='last')
-    #
-    # dfSentimentStocks.author.value_counts()
-    #
-    # dfSentimentStocks.to_csv('Reddit_Sentiment_Equity.csv', index=False)
+    # Search for posts containing ticker in title, sort by hot and limit to 10 posts
+    for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='hot', limit=10):
+
+        if submission.domain != "self.wallstreetbets":
+            continue
+        d = {}  # Initialize empty dict
+        d['ticker'] = 'CLOV'  # Ticker column
+        d['num_comments'] = submission.num_comments  # Number of comments in post
+        d['comment_sentiment_average'] = comment_sentiment('CLOV', submission.url)  # Mean of sentiment score of
+        # comments
+        if d['comment_sentiment_average'] == 0.000000:
+            continue
+        d['latest_comment_date'] = latest_comment('CLOV', submission.url)
+        d['score'] = submission.score
+        d['upvote_ratio'] = submission.upvote_ratio
+        d['date'] = submission.created_utc
+        d['domain'] = submission.domain
+        d['num_crossposts'] = submission.num_crossposts
+        d['author'] = submission.author
+        submission_statistics.append(d)
+
+    dfSentimentStocks = pd.DataFrame(submission_statistics)
+
+    _timestampcreated = dfSentimentStocks["date"].apply(get_date)
+    dfSentimentStocks = dfSentimentStocks.assign(timestamp=_timestampcreated)
+
+    _timestampcomment = dfSentimentStocks["latest_comment_date"].apply(get_date)
+    dfSentimentStocks = dfSentimentStocks.assign(commentdate=_timestampcomment)
+
+    dfSentimentStocks.sort_values("latest_comment_date", axis=0, ascending=True, inplace=True, na_position='last')
+
+    dfSentimentStocks.author.value_counts()
+
+    dfSentimentStocks.to_csv('WSB_Sent_Analysis.csv', index=False)
+    print(dfSentimentStocks)

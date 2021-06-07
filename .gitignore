@@ -105,3 +105,6 @@ modules.xml
 
 # API KEYS
 keys.py
+
+# Output file
+WSB_Sent_Analysis.csv
