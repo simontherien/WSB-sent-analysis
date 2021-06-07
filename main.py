@@ -115,7 +115,6 @@ def is_valid_ticker(symbol):
 def get_top_mentioned(sub_reddit):
     # 25 most upvotes recently : log(abs(upvotes - downvotes)) + (now - timeposted /45000)
     # https://medium.com/hacking-and-gonzo/how-reddit-ranking-algorithms-work-ef111e33d0d9
-    global stock_symbols_dict
     top_subreddit = sub_reddit.hot(limit=25)
 
     # Empty list of words
@@ -163,8 +162,10 @@ if __name__ == '__main__':
 
     # Top mentioned stocks
     sub_reddit = reddit.subreddit('wallstreetbets')
-    stocks = get_top_mentioned(sub_reddit)
-    print("Stock symbols by occurences in 25 hottest WSB posts : ", stocks)
+    stocks_dict = get_top_mentioned(sub_reddit)
+    print("Stock symbols by occurences in 25 hottest WSB posts : ", stocks_dict)
+
+    stocks = list(stocks_dict.keys())
 
     # submission_statistics = []
     # d = {}
