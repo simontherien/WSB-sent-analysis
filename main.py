@@ -167,7 +167,7 @@ if __name__ == '__main__':
     submission_statistics = []
     d = {}
     # for ticker in stocks:
-    # Search for posts containing ticker in title, sort by top (last month) and limit to 5
+    # Search for hot posts containing ticker in title and limit to 5
     for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='hot', limit=5):
 
         if submission.domain != "self.wallstreetbets":
