@@ -31,29 +31,33 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 import praw
-from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
+from praw.models import MoreComments
+from nltk.sentiment.vader import SentimentIntensityAnalyzer as sia
 from keys import reddit_client_ID, reddit_secret_token, reddit_user_name, reddit_password
 import re
 
 
-def comment_sentiment(ticker, url_t):
+def comment_sentiment(url_t):
+    # Initialize empty list of body comments
     body_comment = []
 
-    check = reddit.submission(url=url_t)
-    #
-    sub_comments = check.comments
+    # Interact with CommentForest (list of top-level comments each of which contains a CommentForest of replies) of
+    # submission object
+    sub_comments = reddit.submission(url=url_t).comments
 
+    # Output only the body of the top level comments in the thread
     for comment in sub_comments:
+        # If comment forest contains a number of More Comments objects
+        if isinstance(comment, MoreComments):
+            continue
         body_comment.append(comment.body)
 
-    sia = SIA()
     results = []
     for line in body_comment:
         # Return a float for sentiment strength based on the input text. Positive values are positive valence,
         # negative value are negative valence
-        scores = sia.polarity_scores(line)
+        scores = sia().polarity_scores(line)
         scores['headline'] = line
-
         results.append(scores)
 
     df = pd.DataFrame.from_records(results)
@@ -73,21 +77,25 @@ def comment_sentiment(ticker, url_t):
     return average_score
 
 
-# TODO : latest_comment
-def latest_comment(ticker, url_t):
+def latest_comment(url_t):
+    # Initialize empty list of dates
     update_dates = []
 
-    check = reddit.submission(url=url_t)
-    sub_comments = check.comments
+    # Interact with CommentForest (list of top-level comments each of which contains a CommentForest of replies) of
+    # submission object
+    sub_comments = reddit.submission(url=url_t).comments
 
+    # Output only the body of the top level comments in the thread
     for comment in sub_comments:
+        # If comment forest contains a number of More Comments objects
+        if isinstance(comment, MoreComments):
+            continue
         update_dates.append(comment.created_utc)
 
     update_dates.sort()
     return update_dates[-1]
 
 
-# TODO : get_date
 def get_date(date):
     return dt.datetime.fromtimestamp(date)
 
@@ -159,23 +167,21 @@ if __name__ == '__main__':
     submission_statistics = []
     d = {}
     # for ticker in stocks:
-    # Search for posts containing ticker in title, sort by hot and limit to 10 posts
-    for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='hot', limit=10):
+    # Search for posts containing ticker in title, sort by top (last month) and limit to 5
+    for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='hot', limit=5):
 
         if submission.domain != "self.wallstreetbets":
             continue
         d = {}  # Initialize empty dict
         d['ticker'] = 'CLOV'  # Ticker column
         d['num_comments'] = submission.num_comments  # Number of comments in post
-        d['comment_sentiment_average'] = comment_sentiment('CLOV', submission.url)  # Mean of sentiment score of
-        # comments
+        d['comment_sentiment_average'] = comment_sentiment(submission.url)  # Mean of sentiment score of comments
         if d['comment_sentiment_average'] == 0.000000:
             continue
-        d['latest_comment_date'] = latest_comment('CLOV', submission.url)
+        d['latest_comment_date'] = latest_comment(submission.url)
         d['score'] = submission.score
         d['upvote_ratio'] = submission.upvote_ratio
         d['date'] = submission.created_utc
-        d['domain'] = submission.domain
         d['num_crossposts'] = submission.num_crossposts
         d['author'] = submission.author
         submission_statistics.append(d)
