@@ -21,13 +21,35 @@ import pandas as pd
 import numpy as np
 import praw
 from praw.models import MoreComments
+import nltk
+from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as sia
 from keys import reddit_client_ID, reddit_secret_token, reddit_user_name, reddit_password
 import re
 
+
 # WSB focused wording database
-# def new_words(wsb_dict) :
-    # sia.lexicon.update.(wsb_dict)
+#def add_wsb_word(word, score) :
+    #new_words = {word: score}
+    #sia().lexicon.update(new_words)
+
+def get_sentence_classification(sentence):
+    tokenized_sentence = nltk.word_tokenize(sentence)
+
+    pos_word_list = []
+    neu_word_list = []
+    neg_word_list = []
+
+    for word in tokenized_sentence:
+        if (sia().polarity_scores(word)['compound']) >= 0.1:
+            pos_word_list.append(word)
+        elif (sia().polarity_scores(word)['compound']) <= -0.1:
+            neg_word_list.append(word)
+        else:
+            neu_word_list.append(word)
+
+    return dict([('Positive', pos_word_list), ('Neutral', neu_word_list), ('Negative', neg_word_list)])
+
 
 def comment_sentiment(url_t):
     # Initialize empty list of body comments
@@ -51,7 +73,7 @@ def comment_sentiment(url_t):
         scores = sia().polarity_scores(line)
         scores['headline'] = line
         results.append(scores)
-        #print(scores)
+        # print(scores)
 
     df = pd.DataFrame.from_records(results)
     df.head()
@@ -144,52 +166,55 @@ def get_top_mentioned(sub_reddit):
 
 if __name__ == '__main__':
     # API keys
-    reddit = praw.Reddit(client_id=reddit_client_ID,
-                         client_secret=reddit_secret_token,
-                         user_agent='SentAnalysis',
-                         username=reddit_user_name,
-                         reddit_password=reddit_password)
-
-    # Top mentioned stocks
-    sub_reddit = reddit.subreddit('wallstreetbets')
-    stocks_dict = get_top_mentioned(sub_reddit)
-    print("Stock symbols by occurrences in 25 hottest WSB posts : ", stocks_dict)
-
-    stocks = list(stocks_dict.keys())
-
-    submission_statistics = []
-    d = {}
-    # for ticker in stocks:
-    # Search for top posts containing ticker in title and limit to 5
-    for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='top', time_filter='month', limit=5):
-
-        if submission.domain != "self.wallstreetbets":
-            continue
-        d = {}  # Initialize empty dict
-        d['ticker'] = 'CLOV'  # Ticker column
-        d['num_comments'] = submission.num_comments  # Number of comments in post
-        d['comment_sentiment_average'] = comment_sentiment(submission.url)  # Mean of sentiment score of comments
-        if d['comment_sentiment_average'] == 0.000000:
-            continue
-        d['latest_comment_date'] = latest_comment(submission.url)
-        d['score'] = submission.score
-        d['upvote_ratio'] = submission.upvote_ratio
-        d['date'] = submission.created_utc
-        d['num_crossposts'] = submission.num_crossposts
-        d['author'] = submission.author
-        submission_statistics.append(d)
-
-    dfSentimentStocks = pd.DataFrame(submission_statistics)
-
-    _timestampcreated = dfSentimentStocks["date"].apply(get_date)
-    dfSentimentStocks = dfSentimentStocks.assign(timestamp=_timestampcreated)
-
-    _timestampcomment = dfSentimentStocks["latest_comment_date"].apply(get_date)
-    dfSentimentStocks = dfSentimentStocks.assign(commentdate=_timestampcomment)
-
-    dfSentimentStocks.sort_values("latest_comment_date", axis=0, ascending=True, inplace=True, na_position='last')
-
-    dfSentimentStocks.author.value_counts()
-
-    dfSentimentStocks.to_csv('WSB_Sent_Analysis.csv', index=False)
-    print(dfSentimentStocks)
+    # reddit = praw.Reddit(client_id=reddit_client_ID,
+    #                      client_secret=reddit_secret_token,
+    #                      user_agent='SentAnalysis',
+    #                      username=reddit_user_name,
+    #                      reddit_password=reddit_password)
+    #
+    # # Top mentioned stocks
+    # sub_reddit = reddit.subreddit('wallstreetbets')
+    # stocks_dict = get_top_mentioned(sub_reddit)
+    # print("Stock symbols by occurrences in 25 hottest WSB posts : ", stocks_dict)
+    #
+    # stocks = list(stocks_dict.keys())
+    #
+    # submission_statistics = []
+    # d = {}
+    # # for ticker in stocks:
+    # # Search for top posts containing ticker in title and limit to 5
+    # for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='top', time_filter='month', limit=5):
+    #
+    #     if submission.domain != "self.wallstreetbets":
+    #         continue
+    #     d = {}  # Initialize empty dict
+    #     d['ticker'] = 'CLOV'  # Ticker column
+    #     d['num_comments'] = submission.num_comments  # Number of comments in post
+    #     d['comment_sentiment_average'] = comment_sentiment(submission.url)  # Mean of sentiment score of comments
+    #     if d['comment_sentiment_average'] == 0.000000:
+    #         continue
+    #     d['latest_comment_date'] = latest_comment(submission.url)
+    #     d['score'] = submission.score
+    #     d['upvote_ratio'] = submission.upvote_ratio
+    #     d['date'] = submission.created_utc
+    #     d['num_crossposts'] = submission.num_crossposts
+    #     d['author'] = submission.author
+    #     submission_statistics.append(d)
+    #
+    # dfSentimentStocks = pd.DataFrame(submission_statistics)
+    #
+    # _timestampcreated = dfSentimentStocks["date"].apply(get_date)
+    # dfSentimentStocks = dfSentimentStocks.assign(timestamp=_timestampcreated)
+    #
+    # _timestampcomment = dfSentimentStocks["latest_comment_date"].apply(get_date)
+    # dfSentimentStocks = dfSentimentStocks.assign(commentdate=_timestampcomment)
+    #
+    # dfSentimentStocks.sort_values("latest_comment_date", axis=0, ascending=True, inplace=True, na_position='last')
+    #
+    # dfSentimentStocks.author.value_counts()
+    #
+    # dfSentimentStocks.to_csv('WSB_Sent_Analysis.csv', index=False)
+    # print(dfSentimentStocks)
+    string_test = 'AMC TO THE MOON'
+    print(string_test)
+    print(get_sentence_classification(string_test))
