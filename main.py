@@ -8,23 +8,12 @@ Scraped WSB sentiment, got the top + most positively mentioned stocks on WSB. Us
 for Sentiment Reasoning), which is a model used for text sentiment analysis that is sensitive to both polarity
 (positive/negative) and intensity (strength) of emotion.
 
-The way it works is by relying on a dictionary that maps lexical features to emotion intensities, these are known as
-sentiment scores. The overall sentiment score of a comment/post is achieved by summing up the intensity of each word
-in the text. In some ways, it's easy: words like ‘love’, ‘enjoy’, ‘happy’, ‘like’ all convey a positive sentiment.
-Also VADER is smart enough to understand the basic context of these words, such as “did not love” as a negative
-statement. It also understands the emphasis of capitalization and punctuation, such as “ENJOY”. Phrases like “The
-acting was good , but the movie could have been better” have sentiments in both polarities, which makes this kind of
-analysis tricky -- essentially w VADER you would analyze which part of the sentiment here is more intense.
-
 Possible improvements:
 - A quant strategy has to have near perfect statistically significant results for it to be
 relied on blinded, and this has a very narrow dataset that hasn't been tested across a full market cycle.
-- Build a simple WSB focused wording database and reference each with abbreviations or numbers which will make it
-much easier for code to understand
 - Create a class that implements a common interface. This will allow you to swap out sentiment
 analysers and also use different data sources by extending classes
 - Implement it to know when to get it / out (execution)
-- Use of an ML model (deep learning, transformers)
 """
 
 import datetime as dt
@@ -36,6 +25,9 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer as sia
 from keys import reddit_client_ID, reddit_secret_token, reddit_user_name, reddit_password
 import re
 
+# WSB focused wording database
+# def new_words(wsb_dict) :
+    # sia.lexicon.update.(wsb_dict)
 
 def comment_sentiment(url_t):
     # Initialize empty list of body comments
@@ -59,6 +51,7 @@ def comment_sentiment(url_t):
         scores = sia().polarity_scores(line)
         scores['headline'] = line
         results.append(scores)
+        #print(scores)
 
     df = pd.DataFrame.from_records(results)
     df.head()
@@ -131,7 +124,7 @@ def get_top_mentioned(sub_reddit):
     stock_symbols = []
     not_stocks = ["A", "I", "DD", "WSB", "YOLO", "RH", "EV", "PE", "ETH", "BTC", "E", "APES", "YOLO", "GAIN", "LOSS",
                   "WILL", "NOT", "SELL", "AOC", "CNBC", "CEO", "IN", "DAYS", "DFV", "NEXT", "IT",
-                  "SEND", "U", "MOON", "HOLD", "USD", "TD", "IRS"]
+                  "SEND", "U", "MOON", "HOLD", "USD", "TD", "IRS", "ALL", "ON"]
 
     for title in words_collection:
         for word in title:
@@ -167,8 +160,8 @@ if __name__ == '__main__':
     submission_statistics = []
     d = {}
     # for ticker in stocks:
-    # Search for hot posts containing ticker in title and limit to 5
-    for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='hot', limit=5):
+    # Search for top posts containing ticker in title and limit to 5
+    for submission in reddit.subreddit('wallstreetbets').search('CLOV', sort='top', time_filter='month', limit=5):
 
         if submission.domain != "self.wallstreetbets":
             continue
