@@ -14,6 +14,7 @@ relied on blinded, and this has a very narrow dataset that hasn't been tested ac
 - Create a class that implements a common interface. This will allow you to swap out sentiment
 analysers and also use different data sources by extending classes
 - Implement it to know when to get it / out (execution)
+- wsb_lexicon sentiment scores based on historical returns (multivariate regression analysis : returns = B*words + u)
 """
 
 import datetime as dt
@@ -22,7 +23,6 @@ import numpy as np
 import praw
 from praw.models import MoreComments
 import nltk
-from nltk.tokenize import word_tokenize, RegexpTokenizer
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from keys import reddit_client_ID, reddit_secret_token, reddit_user_name, reddit_password
 import re
