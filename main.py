@@ -10,8 +10,7 @@ Possible improvements:
 relied on blinded, and this has a very narrow dataset that hasn't been tested across a full market cycle.
 - Create a class that implements a common interface. This will allow you to swap out sentiment
 analysers and also use different data sources by extending classes
-- Implement it to know when to get it / out (execution)
-- wsb_lexicon sentiment scores based on historical returns (multivariate regression analysis : returns = B*words + u)
+- Empirical wsb_lexicon sentiment scores
 """
 
 import datetime as dt
@@ -133,9 +132,9 @@ def is_valid_ticker(symbol):
 
 
 def get_top_mentioned(sub_reddit):
-    # 25 most upvotes recently : log(abs(upvotes - downvotes)) + (now - timeposted /45000)
+    # 20 most upvotes recently : log(abs(upvotes - downvotes)) + (now - timeposted /45000)
     # https://medium.com/hacking-and-gonzo/how-reddit-ranking-algorithms-work-ef111e33d0d9
-    top_subreddit = sub_reddit.hot(limit=25)
+    top_subreddit = sub_reddit.hot(limit=20)
 
     # Empty list of words
     words_collection = []
@@ -143,22 +142,19 @@ def get_top_mentioned(sub_reddit):
     # Collect words in submission titles
     for submission in top_subreddit:
         title = submission.title
-        if title.isupper():  # Not all uppercase submission titles
-            pass
-        else:
-            title_words = re.split("\s|,|;|:", title)
-            words_collection.append(title_words)
+        title_words = re.split("\s|,|;|:", title)
+        words_collection.append(title_words)
 
     # Stock symbols in submission titles
     stock_symbols = []
     not_stocks = ["A", "I", "DD", "WSB", "YOLO", "RH", "EV", "PE", "ETH", "BTC", "E", "APES", "YOLO", "GAIN", "LOSS",
                   "WILL", "NOT", "SELL", "AOC", "CNBC", "CEO", "IN", "DAYS", "DFV", "NEXT", "IT",
-                  "SEND", "U", "MOON", "HOLD", "USD", "TD", "IRS", "ALL", "ON", "LOAN", "SI", "PSA"]
+                  "SEND", "U", "MOON", "HOLD", "USD", "TD", "IRS", "ALL", "ON", "LOAN", "SI", "PSA", "ITM", "EM"]
 
     for title in words_collection:
         for word in title:
             # If word is upper case, does not contain a digit, length between 1 and 4 and is in US universe
-            if word.isupper() and len(word) < 5 and not (
+            if word.isupper() and len(word) < 6 and not (
                     any(char.isdigit() for char in word)) and word not in not_stocks:
                 word = word.replace("$", "", 1)
                 word = word.replace("#", "", 1)
@@ -171,18 +167,21 @@ def get_top_mentioned(sub_reddit):
     return dict(sorted(stock_symbols_dict.items(), key=lambda item: item[1], reverse=True))
 
 
-# Portfolio construction with weights based on accuracy of sentiment score (more comments: less variance)
-# def get_ticker_sentiment(sentiment_df):
-#     pivot_sentiment_df = sentiment_df.pivot(index=['ticker', 'comment_sentiment_average'], values='num_comments')
-#
-#     return pivot_sentiment_df
+# Weighted average of sentiment of submissions based on number of comments
+def get_ticker_sentiment(sentiment_df):
+    w_a = lambda x: np.average(x, weights=sentiment_df.loc[x.index, 'num_comments'])
+
+    return sentiment_df.groupby('ticker').agg(ticker_ncomments=('num_comments', 'sum'),  # Total n of comments
+                                              ticker_nupvotes=('score', 'sum'),  # Total score of ticker
+                                              ticker_sentiment=(
+                                              'comment_sentiment_average', w_a))  # W average of sentiment
 
 
 if __name__ == '__main__':
     # Top mentioned stocks
     sub_reddit = reddit.subreddit('wallstreetbets')
     stocks_dict = get_top_mentioned(sub_reddit)
-    print("Stock symbols by occurrences in 25 hottest WSB posts : ", stocks_dict)
+    print("Stock symbols by occurrences in 20 hottest WSB posts : ", stocks_dict)
 
     df_wsb_words = pd.read_csv('wsb_lexicon.csv')
     wsb_words = list(df_wsb_words.itertuples(index=False, name=None))
@@ -192,8 +191,7 @@ if __name__ == '__main__':
 
     stocks = list(stocks_dict.keys())
 
-    submission_statistics = []
-    d = {}
+    submission_statistics = []  # list of dicts
     for ticker in stocks:
         # Search for top posts containing ticker in title and limit to 5
         for submission in reddit.subreddit('wallstreetbets').search(ticker, time_filter='month', limit=5):
@@ -214,9 +212,6 @@ if __name__ == '__main__':
             submission_statistics.append(d)
 
     dfSentimentStocks = pd.DataFrame(submission_statistics)
-    dfSentimentStocks.sort_values("latest_comment_date", axis=0, ascending=True, inplace=True, na_position='last')
-    dfSentimentStocks.to_csv('wsb_sent_analysis.csv', index=False)
+    dfSentimentStocks.to_csv('wsb_submission_analysis.csv', index=False)
 
-    #print(get_ticker_sentiment(dfSentimentStocks))
-
-    # print(dfSentimentStocks)
+    print(get_ticker_sentiment(dfSentimentStocks))

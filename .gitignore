@@ -107,4 +107,4 @@ modules.xml
 keys.py
 
 # Output file
-WSB_Sent_Analysis.csv
+wsb_submission_analysis.csv
