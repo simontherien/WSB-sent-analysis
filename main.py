@@ -39,6 +39,7 @@ def add_wsb_word(word, score):
     SIA.lexicon.update({word: score})
 
 
+# For debugging
 def get_sentence_classification(sentence):
     tokenized_sentence = nltk.word_tokenize(sentence)
 
@@ -57,7 +58,8 @@ def get_sentence_classification(sentence):
     return dict([('Positive', pos_word_list), ('Neutral', neu_word_list), ('Negative', neg_word_list)])
 
 
-def comment_sentiment(url_t):
+# Sentiment score of submission
+def get_submission_sentiment(url_t):
     # Initialize empty list of body comments
     body_comment = []
 
@@ -76,24 +78,22 @@ def comment_sentiment(url_t):
     for line in body_comment:
         # Return a float for sentiment strength based on the input text. Positive values are positive valence,
         # negative value are negative valence
-        scores = SIA.polarity_scores(line)
-        scores['headline'] = line
-        results.append(scores)
-        print(scores)
+        scores = SIA.polarity_scores(line)  # Score for each comment
+        scores['headline'] = line  # Comment
+        results.append(scores)  # Append scores and comment to results
 
-    df = pd.DataFrame.from_records(results)
-    df.head()
-    df['label'] = 0
+    df = pd.DataFrame.from_records(results)  # Results to pandas dataframe
 
-    df.loc[df['compound'] > 0.1, 'label'] = 1
-    df.loc[df['compound'] < -0.1, 'label'] = -1
+    df['label'] = 0  # Label : positive, negative or neutral comment
+    df.loc[df['compound'] > 0.05, 'label'] = 1  # Positive comment then label = 1
+    df.loc[df['compound'] < -0.05, 'label'] = -1  # Negative comment then label = -1, else label = 0
 
     average_score = 0
     position = 0
     while position < len(df.label) - 1:
-        average_score = average_score + df.label[position]
+        average_score = average_score + df.label[position]  # Sum of all sentiment labels
         position += 1
-    average_score = average_score / len(df.label)
+    average_score = average_score / len(df.label)  # Average sentiment of comments in submission
 
     return average_score
 
@@ -111,12 +111,13 @@ def latest_comment(url_t):
         # If comment forest contains a number of More Comments objects
         if isinstance(comment, MoreComments):
             continue
-        update_dates.append(comment.created_utc)
+        update_dates.append(comment.created_utc)  # Creation date of comment
 
-    update_dates.sort()
-    return update_dates[-1]
+    update_dates.sort()  # Increasing dates
+    return update_dates[-1]  # Date of last comment
 
 
+# Time stamp to date
 def get_date(date):
     return dt.datetime.fromtimestamp(date)
 
@@ -152,7 +153,7 @@ def get_top_mentioned(sub_reddit):
     stock_symbols = []
     not_stocks = ["A", "I", "DD", "WSB", "YOLO", "RH", "EV", "PE", "ETH", "BTC", "E", "APES", "YOLO", "GAIN", "LOSS",
                   "WILL", "NOT", "SELL", "AOC", "CNBC", "CEO", "IN", "DAYS", "DFV", "NEXT", "IT",
-                  "SEND", "U", "MOON", "HOLD", "USD", "TD", "IRS", "ALL", "ON", "LOAN", "SI"]
+                  "SEND", "U", "MOON", "HOLD", "USD", "TD", "IRS", "ALL", "ON", "LOAN", "SI", "PSA"]
 
     for title in words_collection:
         for word in title:
@@ -170,6 +171,13 @@ def get_top_mentioned(sub_reddit):
     return dict(sorted(stock_symbols_dict.items(), key=lambda item: item[1], reverse=True))
 
 
+# Portfolio construction with weights based on accuracy of sentiment score (more comments: less variance)
+# def get_ticker_sentiment(sentiment_df):
+#     pivot_sentiment_df = sentiment_df.pivot(index=['ticker', 'comment_sentiment_average'], values='num_comments')
+#
+#     return pivot_sentiment_df
+
+
 if __name__ == '__main__':
     # Top mentioned stocks
     sub_reddit = reddit.subreddit('wallstreetbets')
@@ -181,42 +189,34 @@ if __name__ == '__main__':
 
     for word, score in wsb_words:
         add_wsb_word(word, score)
-    # #
-    # # stocks = list(stocks_dict.keys())
-    # #
+
+    stocks = list(stocks_dict.keys())
+
     submission_statistics = []
     d = {}
-    # for ticker in stocks:
-    # Search for top posts containing ticker in title and limit to 5
-    for submission in reddit.subreddit('wallstreetbets').search('BB', sort='top', time_filter='month', limit=5):
+    for ticker in stocks:
+        # Search for top posts containing ticker in title and limit to 5
+        for submission in reddit.subreddit('wallstreetbets').search(ticker, time_filter='month', limit=5):
 
-        if submission.domain != "self.wallstreetbets":
-            continue
-        d = {}  # Initialize empty dict
-        d['ticker'] = 'BB'  # Ticker column
-        d['num_comments'] = submission.num_comments  # Number of comments in post
-        d['comment_sentiment_average'] = comment_sentiment(submission.url)  # Mean of sentiment score of comments
-        if d['comment_sentiment_average'] == 0.000000:
-            continue
-        d['latest_comment_date'] = latest_comment(submission.url)
-        d['score'] = submission.score
-        d['upvote_ratio'] = submission.upvote_ratio
-        d['date'] = submission.created_utc
-        d['num_crossposts'] = submission.num_crossposts
-        d['author'] = submission.author
-        submission_statistics.append(d)
+            if submission.domain != "self.wallstreetbets":
+                continue
+            d = {}  # Initialize empty dict
+            d['ticker'] = ticker  # Ticker column
+            d['num_comments'] = submission.num_comments  # Number of comments in post
+            d['comment_sentiment_average'] = get_submission_sentiment(
+                submission.url)  # Mean of sentiment score of comments
+            if d['comment_sentiment_average'] == 0.000000:  # Skip if submission sentiment is neutral
+                continue
+            d['score'] = submission.score
+            d['creation date'] = get_date(submission.created_utc)  # Creation date of submission
+            d['latest_comment_date'] = get_date(latest_comment(submission.url))  # Latest comment in submission
+            d['author'] = submission.author  # Author of submission
+            submission_statistics.append(d)
 
     dfSentimentStocks = pd.DataFrame(submission_statistics)
-
-    _timestampcreated = dfSentimentStocks["date"].apply(get_date)
-    dfSentimentStocks = dfSentimentStocks.assign(timestamp=_timestampcreated)
-
-    _timestampcomment = dfSentimentStocks["latest_comment_date"].apply(get_date)
-    dfSentimentStocks = dfSentimentStocks.assign(commentdate=_timestampcomment)
-
     dfSentimentStocks.sort_values("latest_comment_date", axis=0, ascending=True, inplace=True, na_position='last')
+    dfSentimentStocks.to_csv('wsb_sent_analysis.csv', index=False)
 
-    dfSentimentStocks.author.value_counts()
+    #print(get_ticker_sentiment(dfSentimentStocks))
 
-    dfSentimentStocks.to_csv('WSB_Sent_Analysis.csv', index=False)
-    #print(dfSentimentStocks)
+    # print(dfSentimentStocks)
