@@ -172,27 +172,24 @@ def get_top_mentioned(sub_reddit):
 def get_ticker_stats(sentiment_df):
     w_a = lambda x: np.average(x, weights=sentiment_df.loc[x.index, 'num_comments'])
 
-    return sentiment_df.groupby('ticker').agg(ticker_ncomments=('num_comments', 'sum'),  # Total n of comments
-                                              ticker_nupvotes=('score', 'sum'),  # Total score of ticker
-                                              ticker_sentiment=(
+    return sentiment_df.groupby('ticker').agg(ncomments=('num_comments', 'sum'),  # Total n of comments
+                                              nupvotes=('score', 'sum'),  # Total score of ticker
+                                              sentiment=(
                                               'comment_sentiment_average', w_a))  # W average of sentiment
 
-def get_rank_ticker(stats_df):
-    stats_df['comment_rank'] = stats_df['ticker_ncomments'].rank(ascending=False)
-    stats_df['upvote_rank'] = stats_df['ticker_nupvotes'].rank(ascending=False)
-    stats_df['sent_rank'] = stats_df['ticker_sentiment'].rank(ascending=False)
+def add_rank_ticker(stats_df):
+    stats_df['comment_rank'] = stats_df['ncomments'].rank()
+    stats_df['upvote_rank'] = stats_df['nupvotes'].rank()
+    stats_df['sent_rank'] = stats_df['sentiment'].rank()
 
-    # pd.factorize will generate unique values for each unique element of a iterable.
-    # We only need to sort in the order we'd like, then factorize.
-    # In order to do multiple columns, we convert the sorted result to tuples.
-    cols = ['ticker_ncomments', 'ticker_nupvotes', 'ticker_sentiment']
-    tups = stats_df[cols].sort_values(cols, ascending=False).apply(tuple, 1)
-    f, i = pd.factorize(tups)
-    factorized = pd.Series(f + 1, tups.index)
-    stats_df['total_rank'] = factorized
+    stats_df['total_rank'] = stats_df['comment_rank'] + stats_df['upvote_rank'] + stats_df['sent_rank']
 
     return stats_df
 
+def add_ptf_weights(ranked_stats_df) :
+    ranked_stats_df['ptf_weight'] = ranked_stats_df['total_rank'] / ranked_stats_df['total_rank'].sum()
+
+    return ranked_stats_df
 
 if __name__ == '__main__':
     # Top mentioned stocks
@@ -228,9 +225,10 @@ if __name__ == '__main__':
             d['author'] = submission.author  # Author of submission
             submission_statistics.append(d)
 
-    dfSentimentStocks = pd.DataFrame(submission_statistics)
-    dfSentimentStocks.to_csv('wsb_submission_analysis.csv', index=False)
+    df_sentiment_stocks = pd.DataFrame(submission_statistics)
+    df_sentiment_stocks.to_csv('wsb_submission_analysis.csv', index=False)
 
-    df_ticker_stats = get_ticker_stats(dfSentimentStocks).reset_index()
-    df_ticker_stats_ranked = get_rank_ticker(df_ticker_stats)
-    df_ticker_stats_ranked.to_csv('wsb_ranked_tickers.csv', index=False)
+    df_ticker_stats = get_ticker_stats(df_sentiment_stocks).reset_index()
+    df_ticker_stats_ranked = add_rank_ticker(df_ticker_stats)
+    df_ptf_weights = add_ptf_weights(df_ticker_stats_ranked)
+    df_ptf_weights.to_csv('wsb_portfolio_weights.csv', index=False)

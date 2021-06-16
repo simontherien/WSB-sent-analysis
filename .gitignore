@@ -108,4 +108,4 @@ keys.py
 
 # Output files
 wsb_submission_analysis.csv
-wsb_ranked_tickers.csv
+wsb_portfolio_weights.csv
