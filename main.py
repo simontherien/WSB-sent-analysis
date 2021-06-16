@@ -175,7 +175,8 @@ def get_ticker_stats(sentiment_df):
     return sentiment_df.groupby('ticker').agg(ncomments=('num_comments', 'sum'),  # Total n of comments
                                               nupvotes=('score', 'sum'),  # Total score of ticker
                                               sentiment=(
-                                              'comment_sentiment_average', w_a))  # W average of sentiment
+                                                  'comment_sentiment_average', w_a))  # W average of sentiment
+
 
 def add_rank_ticker(stats_df):
     stats_df['comment_rank'] = stats_df['ncomments'].rank()
@@ -186,10 +187,12 @@ def add_rank_ticker(stats_df):
 
     return stats_df
 
-def add_ptf_weights(ranked_stats_df) :
+
+def add_ptf_weights(ranked_stats_df):
     ranked_stats_df['ptf_weight'] = ranked_stats_df['total_rank'] / ranked_stats_df['total_rank'].sum()
 
     return ranked_stats_df
+
 
 if __name__ == '__main__':
     # Top mentioned stocks
