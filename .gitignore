@@ -106,5 +106,6 @@ modules.xml
 # API KEYS
 keys.py
 
-# Output file
+# Output files
 wsb_submission_analysis.csv
+wsb_ranked_tickers.csv
