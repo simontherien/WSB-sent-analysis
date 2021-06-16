@@ -1,7 +1,7 @@
 """
 Momentum based strategy
 
-Scraped WSB sentiment, got the top + most positively mentioned stocks on WSB. Uses VADER (Valence Aware Dictionary
+Scraped WSB sentiment, got the top + hottest mentioned stocks on WSB. Uses VADER (Valence Aware Dictionary
 for Sentiment Reasoning), which is a model used for text sentiment analysis that is sensitive to both polarity
 (positive/negative) and intensity (strength) of emotion.
 
